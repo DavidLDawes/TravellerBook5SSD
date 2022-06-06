@@ -55,7 +55,6 @@ func (t tech) techChanged(tlSelected string) {
 }
 
 func (t tech) getTons() float32 {
-
 	return 0.0
 }
 

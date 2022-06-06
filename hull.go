@@ -27,9 +27,11 @@ const (
 )
 
 var (
-	hullDetails = hull{defaultHull, defaultHullString,
+	hullDetails = hull{
+		defaultHull, defaultHullString,
 		defaultArmor, 0, defaultArmorString, defaultArmorValue,
-		defaultSections}
+		defaultSections,
+	}
 
 	hullSelect  *widget.Select
 	armorSelect *widget.Select
@@ -76,7 +78,7 @@ func (h hull) init(form *widget.Form, box *widget.Box) {
 
 	h.tons = defaultHull
 	h.tonString = defaultHullString
-	h.armorTons = 0
+	hullDetails.armorTons = 0
 	h.armorString = defaultArmorString
 	h.isArmored = false
 	h.armor = 0
@@ -97,6 +99,7 @@ func (h hull) hullChanged(hullSelected string) {
 				h.tonString = hullSelected
 				h.updateHullDetails()
 				drives.updateDrives()
+				summary.update()
 			}
 			break
 		}
@@ -105,19 +108,21 @@ func (h hull) hullChanged(hullSelected string) {
 
 func (h hull) armorChanged(armorSelected string) {
 	if armorSelected == "None" {
-		h.armorString = armorSelected
-		h.armorTons = 0
-		h.isArmored = false
-		h.armor = 0
-		h.updateArmorDetails()
+		hullDetails.armorString = armorSelected
+		hullDetails.armorTons = 0
+		hullDetails.isArmored = false
+		hullDetails.armor = 0
+		hullDetails.updateArmorDetails()
+		summary.update()
 	} else {
 		newArmor, err := strconv.Atoi(armorSelected)
 		if err == nil {
-			h.armor = newArmor
-			h.armorString = armorSelected
-			h.isArmored = true
-			h.armorTons = newArmor * 2
-			h.updateArmorDetails()
+			hullDetails.armor = newArmor
+			hullDetails.armorString = armorSelected
+			hullDetails.isArmored = true
+			hullDetails.armorTons = newArmor * 2
+			hullDetails.updateArmorDetails()
+			summary.update()
 		}
 	}
 }
@@ -149,19 +154,19 @@ func (h hull) updateArmorDetails() {
 	if h.armor < 1 {
 		armorLabel.SetText("Unarmored")
 	} else {
-		armorLabel.SetText(fmt.Sprintf("Armor AV-%s using %d tons", h.armorString, h.armorTons))
+		armorLabel.SetText(fmt.Sprintf("Armor AV-%s using %d tons", h.armorString, hullDetails.armorTons))
 	}
 	armorLabel.Refresh()
 	armorLabel.Show()
 }
 
 func (h hull) getHullTons() float32 {
-	return h.getArmorTons() + float32(h.tons)
+	return float32(h.tons)
 }
 
 func (h hull) getArmorTons() float32 {
 	if h.isArmored {
-		return float32(h.armor*h.tons) / 20.0
+		return float32(hullDetails.armorTons) / 20.0
 	} else {
 		return 0
 	}

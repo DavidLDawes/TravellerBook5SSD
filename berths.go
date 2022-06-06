@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"fyne.io/fyne/widget"
 )
 
@@ -73,19 +74,20 @@ var (
 
 		milBerths   = []berthDetails{milBarracks, twoFer, staffStateroom, low}
 		// add low berths to passengerBerths ?
-		passengerBerths = []berthDetails{stateroom, xStateroom, luxuryStateRoom, luxuryXStateRoom, residence, xResidence, luxurySuite, luxuryXSuite, low}
+		passengerBerths = []berthDetails{stateroom, xStateroom, luxuryStateRoom, luxuryXStateRoom, residence,
+			xResidence, luxurySuite, luxuryXSuite, low}
 	*/
 
-	lowBerthSlider         *widget.Slider
-	doubleSlider           *widget.Slider
-	stateroomSlider        *widget.Slider
-	xStateroomSlider       *widget.Slider
-	luxuryStateroomSlider  *widget.Slider
-	luxuryXStateroomSlider *widget.Slider
-	residenceSlider        *widget.Slider
-	xResidenceSlider       *widget.Slider
-	luxurySuiteSlider      *widget.Slider
-	luxuryXSuiteSlider     *widget.Slider
+	lowBerthSlider *widget.Slider
+	// doubleSlider           *widget.Slider
+	stateroomSlider *widget.Slider
+	// xStateroomSlider       *widget.Slider
+	// luxuryStateroomSlider  *widget.Slider
+	// luxuryXStateroomSlider *widget.Slider
+	// residenceSlider        *widget.Slider
+	// xResidenceSlider       *widget.Slider
+	// luxurySuiteSlider      *widget.Slider
+	// luxuryXSuiteSlider     *widget.Slider
 )
 
 func (b allBerths) init(form *widget.Form, box *widget.Box) {
@@ -94,25 +96,12 @@ func (b allBerths) init(form *widget.Form, box *widget.Box) {
 	stateroomSlider.Show()
 	stateroomSlider.OnChanged = stateroomsChanged
 
-	xStateroomSlider = widget.NewSlider(0.0, 150.0)
-	xStateroomSlider.Value = 0
-	xStateroomSlider.Show()
-	xStateroomSlider.OnChanged = xStateroomsChanged
-
-	doubleSlider = widget.NewSlider(0.0, 150.0)
-	doubleSlider.Value = 0
-	doubleSlider.Show()
-	doubleSlider = widget.NewSlider(0.0, 200.0)
-	doubleSlider.OnChanged = doubleChanged
-
 	lowBerthSlider = widget.NewSlider(0.0, 150.0)
 	lowBerthSlider.Value = 0
 	lowBerthSlider.Show()
 	lowBerthSlider.OnChanged = lowBerthChanged
 
-	form.AppendItem(widget.NewFormItem("Double Berths", doubleSlider))
 	form.AppendItem(widget.NewFormItem("Staterooms", stateroomSlider))
-	form.AppendItem(widget.NewFormItem("Xeno-Staterooms", xStateroomSlider))
 	form.AppendItem(widget.NewFormItem("Low Berths", lowBerthSlider))
 
 	box.Children = append(box.Children, berthDetailsBox)
@@ -120,57 +109,48 @@ func (b allBerths) init(form *widget.Form, box *widget.Box) {
 }
 
 func (b allBerths) fixupSliders() {
-	lowBerthSlider = widget.NewSlider(0.0, 150.0)
-
+	lowBerthSlider = widget.NewSlider(0.0, float64(hullDetails.tons)/5.0)
+	stateroomSlider = widget.NewSlider(0.0, float64(hullDetails.tons)/1.25)
 }
 
 func stateroomsChanged(newSelection float64) {
-	stateroom.count = int(newSelection)
-	updateBerths()
+	if stateroom.count != int(newSelection) {
+		stateroom.count = int(newSelection)
+		updateBerths()
+	}
 }
 
 func lowBerthChanged(newSelection float64) {
-	low.count = int(newSelection)
-	updateBerths()
-}
-
-func xStateroomsChanged(newSelection float64) {
-	xStateroom.count = int(newSelection)
-	updateBerths()
-}
-
-func doubleChanged(newSelection float64) {
-	twoFer.count = int(newSelection)
-	updateBerths()
-}
-
-func LowBerthChanged(newSelection float64) {
-	low.count = int(newSelection)
-	updateBerths()
+	if low.count != int(newSelection) {
+		low.count = int(newSelection)
+		updateBerths()
+	}
 }
 
 func updateBerths() {
 	count := 0
 	tons := float32(0.0)
 	cost := float32(0.0)
-	crew, summary := getOperationsCrew()
+	crew, summ := getOperationsCrew()
 	staffStateroom.count = crew
 	for _, berth := range berths.berths {
 		count += berth.count
 		tons += float32(berth.count) * berth.tonsPer
 		cost += float32(berth.count) * berth.costPer
 		if berth.count > 0 {
-			summary += fmt.Sprintf(" %dx %s costing %.1f for %.1f tons\n",
+			summ += fmt.Sprintf(" %dx %s costing %.1f for %.1f tons\n",
 				berth.count, berth.description, float32(berth.count)*berth.costPer,
 				float32(berth.count)*berth.tonsPer)
 		}
 	}
 	sum.SetText(fmt.Sprintf("%sTotal %d berths costing %.1f using %.1f tons",
-		summary, count, cost, tons))
+		summ, count, cost, tons))
 	sum.Refresh()
 	sum.Show()
 	berthTons = tons
 	berthCost = cost
+
+	summary.update()
 }
 
 func (b allBerths) getTons() float32 {
@@ -206,29 +186,49 @@ func getOperationsCrew() (int, string) {
 		return 2, "Pilot, Navigator\n"
 	} else if hullDetails.tons < 5000 {
 		// purser/captain, comms, pilot, 2xnav
+
 		return 5, "Purser/Captain, Comms, Pilot, 2xNavigator\n"
 	} else if hullDetails.tons < 25000 {
 		// purser, captain, comms, 2xpilot, 2xnav, 2xsecurity, support
+
 		return 10, "Purser, Captain, Comms, 2xPilot, 2xNavigator, 2xSecurity, Support\n"
 	} else if hullDetails.tons < 100000 {
 		// purser, captain, 2xcomms, sensors, 2xpilot, 2xnav, 8xsecurity, 2xsupport
+
 		return 19, "Purser, Captain, 2xComms, Sensors, 2xPilot, 2xNavigator, 8xSecurity, 2xSupport\n"
 	} else if hullDetails.tons < 500000 {
 		// purser, captain, 2xcomms, 2xsensors, 2xpilot, 2xnav, 12xsecurity, 8xsupport
+
 		return 28, "Purser, Captain, 2xComms, 2xSensors, 2xPilot, 2xNavigator, 12xSecurity, 6xSupport\n"
 	} else if hullDetails.tons < 2500000 {
 		// purser, captain, 4xcomms, 2xsensors, 4xpilot, 4xnav, 20xsecurity, 10xsupport
+
 		return 46, "Purser, Captain, 4xComms, 2xSensors, 4xPilot, 4xNavigator, 20xSecurity, 10xSupport\n"
+	} else if hullDetails.tons < 5000000 {
 		// purser, captain, 4x dept. heads, 8xcomms, 4xsensors, 4xpilot, 4xnav, 40xsecurity, 20xsupport, 10 maint
-		return 96, "Purser, Captain, 4xDept. Heads, 8xComms, 4xSensors, 4xPilot, 4xNavigator, 40xSecurity, 20xSupport, 10 Maintenance\n"
+
+		return 96,
+			"Purser, Captain, 4xDept. Heads, 8xComms, 4xSensors, 4xPilot, 4xNavigator, 40xSecurity, 20xSupport, " +
+				"10 Maintenance\n"
 	} else if hullDetails.tons < 10000000 {
-		// purser, bursar, 2xbankers, commander, captain, 4xlt., 8x dept. heads, 12xcomms, 8xsensors, 8xpilot, 4xnav, 80xsecurity, 40xsupport, 20 maint
-		return 190, "Purser, Bursar, 2xBankers, Commander, Captain, 4xLt., 8xDept. Heads, 12xComms, 8xSensors, 8xPilot, 4xNavigator, 80xSecurity, 40xSupport, 20 Maintenance\n"
+		// purser, bursar, 2xbankers, commander, captain, 4xlt., 8x dept. heads, 12xcomms, 8xsensors,
+		// 8xpilot, 4xnav, 80xsecurity, 40xsupport, 20 maint
+
+		return 190,
+			"Purser, Bursar, 2xBankers, Commander, Captain, 4xLt., 8xDept. Heads, 12xComms, 8xSensors, 8xPilot, " +
+				"4xNavigator, 80xSecurity, 40xSupport, 20 Maintenance\n"
 	} else if hullDetails.tons < 25000000 {
-		// 4x pursers, 2xbursers, 4xbankers, commander, captain, 12xlt., 20x dept. heads, 12xcomms, 16xsensors, 10xpilot, 6xnav, 120xsecurity, 60xsupport, 40 maint
-		return 308, "4x Pursers, 2xBursars, 4xBankers, Commander, Captain, 12xLt., 20xDept. Heads, 12xComms, 16xSensors, 10xPilot, 6xNavigator, 120xSecurity, 60xSupport, 40 Maintenance\n"
+		// 4x pursers, 2xbursers, 4xbankers, commander, captain, 12xlt., 20x dept. heads, 12xcomms, 16xsensors,
+		// 10xpilot, 6xnav, 120xsecurity, 60xsupport, 40 maint
+
+		return 308,
+			"4x Pursers, 2xBursars, 4xBankers, Commander, Captain, 12xLt., 20xDept. Heads, 12xComms, 16xSensors, " +
+				"10xPilot, 6xNavigator, 120xSecurity, 60xSupport, 40 Maintenance\n"
 	} else {
-		// 8x pursers, 4xbursers, 8xbankers, 4xcommander, 4xcaptain, 36xlt., 24x dept. heads, 16xcomms, 16xsensors, 12xpilot, 8xnav, 200xsecurity, 100xsupport, 50 maint
-		return 490, "8x Pursers, 4xBursars, 8xBankers, 4xCommanders, 4xCaptains, 24xLt., 24xDept. Heads, 16xComms, 16xSensors, 12xPilot, 8xNavigator, 200xSecurity, 100xSupport, 40 Maintenance\n"
+		// 8x pursers, 4xbursers, 8xbankers, 4xcommander, 4xcaptain, 36xlt., 24x dept. heads, 16xcomms,
+		// 16xsensors, 12xpilot, 8xnav, 200xsecurity, 100xsupport, 50 maint
+		return 490,
+			"8x Pursers, 4xBursars, 8xBankers, 4xCommanders, 4xCaptains, 24xLt., 24xDept. Heads, 16xComms, 16xSensors, " +
+				"12xPilot, 8xNavigator, 200xSecurity, 100xSupport, 40 Maintenance\n"
 	}
 }

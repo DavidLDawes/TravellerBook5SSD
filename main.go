@@ -12,13 +12,13 @@ func main() {
 	details = widget.NewVBox()
 
 	a := app.New()
-	w := a.NewWindow("Traveller ESD High Guard Star Ship Designer")
+	w := a.NewWindow("Traveller SRD Capital Ship Star Ship Designer")
 
 	// tech first since other things depend on it
 	techDetails.init(settings, details)
 	hullDetails.init(settings, details)
 	drives.init(settings, details)
-	electronics.init(settings, details)
+	electronics.init(secondSettings, details)
 	// weapons.init(settings, details)
 	// Always do hull & drives (not to mention tech) before berths
 	// vehicles.initsecondSettings, details)
@@ -31,15 +31,21 @@ func main() {
 }
 
 func getTons() (result float32) {
-	result = techDetails.getTons() + hullDetails.getHullTons() + drives.getTons() +
+	result = hullDetails.getTons() + techDetails.getTons() + drives.getTons() +
 		electronics.getTons() + berths.getTons()
 
 	return
 }
 
+func getCargo() (result float32) {
+	result = float32(hullDetails.tons) - getTons()
+
+	return
+}
+
 func getCost() (result float32) {
-	result = techDetails.getTons() + hullDetails.getHullTons() + drives.getTons() +
-		electronics.getTons() + berths.getTons()
+	result = hullDetails.getCost() + drives.getCost() +
+		electronics.getCost() + berths.getCost()
 
 	return
 }

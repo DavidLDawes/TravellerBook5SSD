@@ -34,10 +34,16 @@ var (
 		anti: false,
 	}
 
-	driveSelections = []string{"0", "1", "2", "3", "4", "5", "6", "7", "8"}
-	powerSelections = []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"}
+	driveSelections = []string{
+		"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
+		"11", "12", "13", "14", "15", "16", "17", "18",
+	}
+	powerSelections = []string{
+		"1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
+		"11", "12", "13", "14", "15", "16", "17", "18", "19", "20",
+	}
 
-	tech4JDrives = []int{0, 1, 2, 3, 4, 5, 6, 7}
+	tech4JDrives = []int{0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 14, 18}
 
 	jSelect *widget.Select
 	mSelect *widget.Select
@@ -62,8 +68,11 @@ var (
 	mTon = []float32{0.0, 0.01, 0.0125, 0.015, 0.0175, 0.025, 0.0325, 0.04, 0.0475}
 	jTon = []float32{0.0, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.075, 0.08}
 	// Note: pTon starts with a value for P-1, since you MUST include power.
-	pTon       = []float32{0.015, 0.02, 0.025, 0.03, 0.04, 0.05, 0.065, 0.08}
-	pTonByTech = []float32{1.25, 1.0, 1.0, 1.0, 1.0, 0.75, 0.6, 0.5}
+	pTon = []float32{
+		0.015, 0.02, 0.025, 0.03, 0.04, 0.05, 0.065, 0.08, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0,
+		2.25, 2.5, 2.75, 3.0, 3.333, 3.6666, 4.0,
+	}
+	pTonByTech = []float32{1.25, 1.0, 1.0, 1.0, 1.0, 0.75, 0.6, 0.5, 0.4, 0.33, 0.25, 0.2, 0.1666}
 )
 
 func (d driveDetails) init(form *widget.Form, box *widget.Box) {
@@ -143,8 +152,16 @@ func (d driveDetails) pChange(newPower string) {
 }
 
 func (d driveDetails) amChecked(antimatter bool) {
-	d.anti = antimatter
-	d.updateDrives()
+	if d.anti != antimatter {
+		if antimatter {
+			d.fuel = d.fuel / 10.0
+		} else {
+			d.fuel = d.fuel * 10
+		}
+		d.anti = antimatter
+		d.updateDrives()
+		summary.update()
+	}
 }
 
 func (d driveDetails) getDriveDetails() (driveDetails string) {
@@ -161,7 +178,7 @@ func (d driveDetails) getDriveDetails() (driveDetails string) {
 
 	if d.anti {
 		driveDetails += fmt.Sprintf("Antimatter stacks %.1f tons costing %.1f MCr\n",
-			d.fuel/10, d.fuel*2.0)
+			d.fuel, d.fuel*20.0)
 	} else {
 		driveDetails += fmt.Sprintf("Fuel %.1f tons costing %.1f MCr\n",
 			d.fuel, d.fuel*0.1)
@@ -220,6 +237,7 @@ func (d driveDetails) updateDrives() (jChanged bool, mChanged bool) {
 		d.m.perf = maxM
 	}
 	driveLabel.SetText(d.getDriveDetails())
+	summary.update()
 
 	return
 }
